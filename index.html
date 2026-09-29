@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Netflix – Clone front-end</title>
+<style>
+:root{--red:#e50914;--bg:#141414;--text:#fff;--muted:#b3b3b3;--card-w:230px}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;overflow-x:hidden}
+button{font:inherit;cursor:pointer;border:0;color:inherit;background:none}
+:focus-visible{outline:2px solid #fff;outline-offset:2px}
+
+/* Navbar */
+.nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;gap:28px;padding:16px 4%;background:linear-gradient(#000c,transparent);transition:background .3s}
+.nav.solid{background:var(--bg)}
+.logo{color:var(--red);font-size:1.9rem;font-weight:900;letter-spacing:2px;text-decoration:none}
+.nav ul{display:flex;gap:18px;list-style:none}
+.nav a{color:#e5e5e5;text-decoration:none;font-size:.9rem}
+.nav a:hover,.nav a.on{color:#fff;font-weight:600}
+.search{margin-left:auto;display:flex;align-items:center;border:1px solid transparent;padding:4px 8px}
+.search.open{border-color:#fff;background:#000a}
+.search input{width:0;background:none;border:0;color:#fff;outline:0;transition:width .3s}
+.search.open input{width:200px;margin-left:8px}
+.avatar{width:32px;height:32px;border-radius:4px;background:linear-gradient(135deg,#1e88e5,#0d47a1);display:grid;place-items:center;font-weight:700}
+
+/* Hero */
+.hero{position:relative;min-height:88vh;display:flex;align-items:center;padding:0 4%;background:
+ linear-gradient(90deg,#000d 0%,#0000 65%),
+ linear-gradient(0deg,var(--bg) 0%,#0000 30%),
+ radial-gradient(circle at 75% 35%,#8c1c2e 0%,#2b1030 45%,#0b0b14 100%)}
+.hero-in{max-width:520px;margin-top:60px}
+.hero h1{font-size:clamp(2.6rem,7vw,4.6rem);line-height:1;font-weight:900;margin-bottom:16px;text-shadow:2px 2px 12px #000a}
+.meta{display:flex;gap:12px;align-items:center;margin-bottom:14px;font-size:.95rem}
+.match{color:#46d369;font-weight:700}
+.age{border:1px solid #fff8;padding:0 6px;font-size:.8rem}
+.hero p{font-size:1.15rem;line-height:1.4;margin-bottom:22px;text-shadow:1px 1px 6px #000}
+.btns{display:flex;gap:12px;flex-wrap:wrap}
+.btn{padding:10px 26px;border-radius:4px;font-weight:700;font-size:1.05rem;transition:background .2s}
+.btn.play{background:#fff;color:#000}.btn.play:hover{background:#ffffffbf}
+.btn.info{background:#6d6d6eb3}.btn.info:hover{background:#6d6d6e66}
+
+/* Rangées */
+main{margin-top:-90px;position:relative;z-index:2;padding-bottom:60px}
+.row{margin-bottom:34px}
+.row h2{font-size:1.3rem;margin:0 4% 10px}
+.track-wrap{position:relative}
+.track{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;padding:14px 4%;scrollbar-width:none}
+.track::-webkit-scrollbar{display:none}
+.arrow{position:absolute;top:14px;bottom:14px;width:4%;z-index:5;background:#000a;font-size:2rem;opacity:0;transition:opacity .2s}
+.arrow.l{left:0}.arrow.r{right:0}
+.track-wrap:hover .arrow{opacity:1}
+.card{flex:0 0 var(--card-w);aspect-ratio:16/9;border-radius:4px;position:relative;scroll-snap-align:start;overflow:hidden;text-align:left;transition:transform .25s,box-shadow .25s}
+.card:hover,.card:focus-visible{transform:scale(1.12);z-index:4;box-shadow:0 8px 24px #000c}
+.card .t{position:absolute;inset:auto 0 0 0;padding:26px 10px 8px;font-weight:700;font-size:.95rem;background:linear-gradient(transparent,#000d)}
+.card .g{position:absolute;top:8px;left:8px;font-size:.7rem;background:#000a;padding:2px 6px;border-radius:2px}
+.empty{padding:0 4%;color:var(--muted)}
+
+/* Modale */
+.modal{position:fixed;inset:0;z-index:100;background:#000b;display:none;align-items:center;justify-content:center;padding:16px}
+.modal.show{display:flex}
+.box{width:min(760px,100%);max-height:92vh;overflow:auto;background:#181818;border-radius:8px;box-shadow:0 10px 50px #000;animation:pop .25s ease}
+@keyframes pop{from{transform:scale(.94);opacity:0}to{transform:none;opacity:1}}
+.box .cover{height:280px;position:relative;display:flex;align-items:flex-end;padding:24px}
+.box .cover::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#181818,transparent 60%)}
+.box .cover h3{position:relative;z-index:1;font-size:2.2rem;font-weight:900}
+.close{position:absolute;top:12px;right:12px;z-index:2;width:36px;height:36px;border-radius:50%;background:#181818;font-size:1.2rem}
+.body{padding:8px 24px 28px}
+.body .btns{margin:14px 0 18px}
+.body p{line-height:1.5;color:#ddd}
+.body dl{margin-top:16px;font-size:.9rem;color:var(--muted)}
+.body dd{color:#fff;display:inline;margin-right:14px}
+
+footer{padding:40px 4%;color:var(--muted);font-size:.85rem;text-align:center;border-top:1px solid #222}
+
+@media(max-width:700px){
+ :root{--card-w:150px}
+ .nav{gap:14px}.nav ul{display:none}
+ .hero{min-height:75vh}.arrow{display:none}
+ .box .cover{height:200px}.box .cover h3{font-size:1.6rem}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<header class="nav" id="nav">
+  <a class="logo" href="#">NETFLIX</a>
+  <ul>
+    <li><a class="on" href="#" data-filter="all">Accueil</a></li>
+    <li><a href="#" data-filter="Série">Séries</a></li>
+    <li><a href="#" data-filter="Film">Films</a></li>
+    <li><a href="#maliste" data-filter="list">Ma liste</a></li>
+  </ul>
+  <div class="search" id="search">
+    <button id="searchBtn" aria-label="Rechercher">&#128269;</button>
+    <input id="q" type="search" placeholder="Titres, genres" aria-label="Rechercher un titre">
+  </div>
+  <div class="avatar" aria-hidden="true">A</div>
+</header>
+
+<section class="hero">
+  <div class="hero-in">
+    <h1>Nuit Blanche à Cotonou</h1>
+    <div class="meta"><span class="match">98 % de recommandation</span><span>2026</span><span class="age">16+</span><span>1 saison</span></div>
+    <p>Dans une ville qui ne dort jamais, une journaliste découvre un secret qui pourrait faire tomber les plus puissants.</p>
+    <div class="btns">
+      <button class="btn play" onclick="openModal(0)">&#9654; Lecture</button>
+      <button class="btn info" onclick="openModal(0)">&#9432; Plus d'infos</button>
+    </div>
+  </div>
+</section>
+
+<main id="rows"></main>
+
+<footer>Projet de démonstration front-end (HTML, CSS, JavaScript) – non affilié à Netflix. Toutes les données sont fictives.</footer>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="box">
+    <div class="cover" id="mCover"><button class="close" id="mClose" aria-label="Fermer">&#10005;</button><h3 id="mTitle"></h3></div>
+    <div class="body">
+      <div class="meta"><span class="match" id="mMatch"></span><span id="mYear"></span><span class="age">16+</span><span id="mType"></span></div>
+      <div class="btns">
+        <button class="btn play">&#9654; Lecture</button>
+        <button class="btn info" id="mList"></button>
+      </div>
+      <p id="mDesc"></p>
+      <dl><dt style="display:inline">Genre : </dt><dd id="mGenre"></dd><dt style="display:inline">Durée : </dt><dd id="mLen"></dd></dl>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- Données fictives (remplace les dégradés par de vraies images si tu veux) ----------
+const TITLES = [
+  {t:"Nuit Blanche à Cotonou",type:"Série",g:"Thriller",y:2026,h:350,len:"1 saison",d:"Dans une ville qui ne dort jamais, une journaliste découvre un secret qui pourrait faire tomber les plus puissants."},
+  {t:"Code Rouge",type:"Film",g:"Action",y:2025,h:5,len:"1 h 54",d:"Un ancien agent est rappelé pour une dernière mission avant que le réseau ne s'effondre."},
+  {t:"Les Héritiers du Sable",type:"Série",g:"Drame",y:2024,h:35,len:"3 saisons",d:"Trois familles se disputent un empire construit sur le commerce des épices."},
+  {t:"Orbite Zéro",type:"Film",g:"Science-fiction",y:2026,h:230,len:"2 h 08",d:"L'équipage d'une station spatiale reçoit un signal venu de sa propre planète, dix ans trop tôt."},
+  {t:"Cuisine en Famille",type:"Série",g:"Comédie",y:2023,h:20,len:"5 saisons",d:"Un restaurant familial survit à tout, sauf aux disputes entre ses trois générations."},
+  {t:"Dernier Souffle",type:"Film",g:"Thriller",y:2025,h:280,len:"1 h 41",d:"Coincé dans une tour en feu, un ingénieur doit faire confiance à un inconnu."},
+  {t:"Lagon Interdit",type:"Série",g:"Aventure",y:2025,h:185,len:"2 saisons",d:"Des plongeurs explorent un lagon dont personne n'est jamais remonté."},
+  {t:"Minuit à Lomé",type:"Film",g:"Drame",y:2024,h:320,len:"1 h 37",d:"Une nuit, deux inconnus et une ville pleine de secondes chances."},
+  {t:"Vitesse Limite",type:"Film",g:"Action",y:2026,h:15,len:"1 h 48",d:"Une course clandestine dans huit capitales pour un seul prix : la liberté."},
+  {t:"Les Ombres du Nord",type:"Série",g:"Thriller",y:2023,h:250,len:"4 saisons",d:"Une commissaire enquête sur des disparitions dans un village coupé du monde."},
+  {t:"Rire Jaune",type:"Série",g:"Comédie",y:2024,h:55,len:"2 saisons",d:"Cinq colocataires, un seul loyer et beaucoup trop de mauvaises idées."},
+  {t:"Le Grand Départ",type:"Film",g:"Aventure",y:2025,h:160,len:"2 h 02",d:"Un vieux marin et sa petite-fille traversent l'Atlantique sur un voilier de fortune."},
+  {t:"Neurones",type:"Série",g:"Science-fiction",y:2026,h:205,len:"1 saison",d:"Une start-up promet de sauvegarder les souvenirs. Personne ne demande où ils vont."},
+  {t:"Frères d'Armes",type:"Film",g:"Action",y:2024,h:0,len:"2 h 15",d:"Deux frères que tout oppose s'unissent pour sauver leur quartier."}
+];
+const ROWS = [
+  {name:"Tendances actuelles",pick:t=>true},
+  {name:"Séries à ne pas manquer",pick:t=>t.type==="Série"},
+  {name:"Films d'action et d'aventure",pick:t=>t.type==="Film"&&["Action","Aventure"].includes(t.g)},
+  {name:"Thrillers et suspense",pick:t=>t.g==="Thriller"},
+  {name:"Ma liste",id:"maliste",pick:(t,i)=>myList.has(i)}
+];
+const $ = s => document.querySelector(s);
+let filter = "all", query = "", current = null;
+
+// ---------- Ma liste (localStorage protégé par try/catch) ----------
+let myList = new Set();
+try { myList = new Set(JSON.parse(localStorage.getItem("nf-list")||"[]")); } catch(e){}
+const save = () => { try { localStorage.setItem("nf-list", JSON.stringify([...myList])); } catch(e){} };
+
+const bg = h => `linear-gradient(135deg,hsl(${h} 70% 35%),hsl(${(h+50)%360} 60% 14%))`;
+
+// ---------- Rendu ----------
+function render(){
+  const wrap = $("#rows"); wrap.innerHTML = "";
+  ROWS.forEach(r=>{
+    if(filter==="list" && r.id!=="maliste") return;
+    let items = TITLES.map((t,i)=>({t,i})).filter(({t,i})=>r.pick(t,i));
+    if(filter==="Série"||filter==="Film") items = items.filter(({t})=>t.type===filter);
+    if(query) items = items.filter(({t})=>(t.t+t.g+t.type).toLowerCase().includes(query));
+    if(r.id==="maliste" && !items.length && filter!=="list") return;
+    const sec = document.createElement("section"); sec.className="row"; if(r.id) sec.id=r.id;
+    sec.innerHTML = `<h2>${r.name}</h2>`;
+    if(!items.length){ sec.innerHTML += `<p class="empty">Rien ici pour l'instant. Ajoute un titre avec « Ma liste ».</p>`; wrap.append(sec); return; }
+    const tw = document.createElement("div"); tw.className="track-wrap";
+    tw.innerHTML = `<button class="arrow l" aria-label="Défiler à gauche">&#8249;</button><div class="track"></div><button class="arrow r" aria-label="Défiler à droite">&#8250;</button>`;
+    const track = tw.querySelector(".track");
+    items.forEach(({t,i})=>{
+      const b = document.createElement("button"); b.className="card"; b.style.background=bg(t.h);
+      b.innerHTML = `<span class="g">${t.type}</span><span class="t">${t.t}</span>`;
+      b.onclick = ()=>openModal(i); track.append(b);
+    });
+    tw.querySelector(".l").onclick = ()=>track.scrollBy({left:-track.clientWidth*.8,behavior:"smooth"});
+    tw.querySelector(".r").onclick = ()=>track.scrollBy({left: track.clientWidth*.8,behavior:"smooth"});
+    sec.append(tw); wrap.append(sec);
+  });
+  if(!wrap.children.length) wrap.innerHTML = `<p class="empty" style="padding-top:120px">Aucun résultat pour « ${query.replace(/</g,"&lt;")} ».</p>`;
+}
+
+// ---------- Modale ----------
+function openModal(i){
+  current = i; const t = TITLES[i];
+  $("#mCover").style.background = bg(t.h);
+  $("#mTitle").textContent = t.t; $("#mDesc").textContent = t.d;
+  $("#mYear").textContent = t.y; $("#mType").textContent = t.type; $("#mGenre").textContent = t.g; $("#mLen").textContent = t.len;
+  $("#mMatch").textContent = (80 + (i*7)%19) + " % de recommandation";
+  syncListBtn(); $("#modal").classList.add("show"); $("#mClose").focus();
+}
+const syncListBtn = () => $("#mList").textContent = myList.has(current) ? "✓ Dans ma liste" : "+ Ma liste";
+const closeModal = () => $("#modal").classList.remove("show");
+$("#mList").onclick = ()=>{ myList.has(current)?myList.delete(current):myList.add(current); save(); syncListBtn(); render(); };
+$("#mClose").onclick = closeModal;
+$("#modal").onclick = e => { if(e.target.id==="modal") closeModal(); };
+document.addEventListener("keydown", e => { if(e.key==="Escape") closeModal(); });
+
+// ---------- Navigation, recherche, scroll ----------
+document.querySelectorAll(".nav a[data-filter]").forEach(a=>a.onclick=e=>{
+  e.preventDefault(); filter=a.dataset.filter;
+  document.querySelectorAll(".nav a").forEach(x=>x.classList.toggle("on",x===a)); render();
+});
+$("#searchBtn").onclick = ()=>{ $("#search").classList.toggle("open"); $("#q").focus(); };
+$("#q").oninput = e => { query = e.target.value.trim().toLowerCase(); render(); };
+addEventListener("scroll", ()=>$("#nav").classList.toggle("solid", scrollY>30));
+
+render();
+</script>
+</body>
+</html>
